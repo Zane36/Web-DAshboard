@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+</head>
+<body>
+  <h1>Dashboard</h1>
+  <h2>Variabili</h2>
+  
+  <div>
+  <label>A: <input type="number" id="inputA"></label>
+  <button onclick="updateVariable('A')">Conferma</button>
+  </div>
+
+  <div>
+  <label>B: <input type="number" id="inputB"></label>
+  <button onclick="updateVariable('B')">Conferma</button>
+  </div>
+
+  <div>
+  <label>C: <input type="number" id="inputC"></label>
+  <button onclick="updateVariable('C')">Conferma</button>
+  </div>
+
+  <div>
+  <label>D: <input type="number" id="inputD"></label>
+  <button onclick="updateVariable('D')">Conferma</button>
+  </div>
+
+  <h2>Liste</h2>
+  <div>
+  <label>X: <input type="text" id="inputX"></label>
+  <button onclick="updateList('X')">Conferma</button>
+  </div>
+
+  <div>
+  <label>Y: <input type="text" id="inputY"></label>
+  <button onclick="updateList('Y')">Conferma</button>
+  </div>
+
+  <div>
+  <label>Z: <input type="text" id="inputZ"></label>
+  <button onclick="updateList('Z')">Conferma</button>
+  </div>
+  
+  <h2>Recap Variabili e Liste</h2>
+  <pre id="recap"></pre>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Funzione per aggiornare una variabile numerica
+    function updateVariable(variable) {
+      const value = document.getElementById(`input${variable}`).value;
+      socket.emit('updateState', { ...getState(), [variable]: parseInt(value, 10) });
+      console.log(`Variable ${variable} updated to ${value}`);
+    }
+
+    // Funzione per aggiornare una lista
+    function updateList(list) {
+      const value = document.getElementById(`input${list}`).value;
+      const newList = value.split(',').map(item => item.trim());
+      socket.emit('updateState', { ...getState(), [list]: newList });
+      console.log(`List ${list} updated with ${value}`);
+    }
+
+    // Funzione per ottenere lo stato corrente
+    function getState() {
+      return {
+        A: parseInt(document.getElementById('inputA').value, 10),
+        B: parseInt(document.getElementById('inputB').value, 10),
+        C: parseInt(document.getElementById('inputC').value, 10),
+        D: parseInt(document.getElementById('inputD').value, 10),
+        X: document.getElementById('inputX').value.split(',').map(item => item.trim()),
+        Y: document.getElementById('inputY').value.split(',').map(item => item.trim()),
+        Z: document.getElementById('inputZ').value.split(',').map(item => item.trim()),
+      };
+    }
+
+    // Aggiorna lo stato quando ricevi un aggiornamento dal server
+    socket.on('updateState', (newState) => {
+      document.getElementById('inputA').value = newState.A;
+      document.getElementById('inputB').value = newState.B;
+      document.getElementById('inputC').value = newState.C;
+      document.getElementById('inputD').value = newState.D;
+      document.getElementById('inputX').value = newState.X.join(', ');
+      document.getElementById('inputY').value = newState.Y.join(', ');
+      document.getElementById('inputZ').value = newState.Z.join(', ');
+
+      // Aggiorna il recap delle variabili e liste
+      updateRecap(newState);
+    });
+
+    // Funzione per aggiornare il recap delle variabili e liste
+    function updateRecap(state) {
+      const recapElement = document.getElementById('recap');
+      recapElement.textContent = JSON.stringify(state, null, 2);
+    }
+
+    // Ricevi lo stato iniziale dal server e inizializza la pagina
+    socket.on('initialState', (initialState) => {
+      initializePage(initialState);
+    });
+
+    // Funzione per inizializzare la pagina con lo stato ricevuto dal server
+    function initializePage(initialState) {
+      document.getElementById('inputA').value = initialState.A;
+      document.getElementById('inputB').value = initialState.B;
+      document.getElementById('inputC').value = initialState.C;
+      document.getElementById('inputD').value = initialState.D;
+      document.getElementById('inputX').value = initialState.X.join(', ');
+      document.getElementById('inputY').value = initialState.Y.join(', ');
+      document.getElementById('inputZ').value = initialState.Z.join(', ');
+
+      // Inizializza il recap delle variabili e liste
+      updateRecap(initialState);
+    }
+  </script>
+</body>
+</html>
